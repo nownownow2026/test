@@ -1,0 +1,469 @@
+---
+// src/pages/about.astro
+// 这是一个静态页面，不需要动态路由
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>关于 - 七年之痒</title>
+  
+  <style>
+    /* CSS变量 - 与首页完全一致 */
+    :root {
+      color-scheme: light dark;
+      --bg: #fffefc;
+      --text: #292524;
+      --muted: #57534e;
+      --border: #e7e5e4;
+      --accent: #b91c1c;
+      --special: #f0f0f0;
+      --red-1: #ffeaea;
+      --red-2: #fde8e8;
+      --red-3: #fce7e7;
+      --red-4: #fbd5d5;
+      --red-5: #fed7d7;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #1a1a1a;
+      --text: #e5e5e5;
+      --muted: #a3a3a3;
+      --border: #333333;
+      --accent: #f87171;
+      --special: #3a3a3a;
+      --red-1: #4a2c2c;
+      --red-2: #4a2d2d;
+      --red-3: #4a2e2e;
+      --red-4: #4a2f2f;
+      --red-5: #4a3030;
+    }
+
+    /* 基础样式 - 与首页完全一致 */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { 
+      height: 100%; 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: system-ui, -apple-system, sans-serif; 
+      line-height: 1.6; 
+    }
+    
+    a { 
+      color: var(--text); 
+      text-decoration: none; 
+      transition: color 0.2s ease;
+    }
+    
+    a:hover { 
+      color: var(--accent); 
+    }
+    
+    /* 标题链接效果 - 与首页完全一致 */
+    .sidebar__title a:after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar__title a:hover:after {
+      transform: scaleX(1);
+    }
+    
+    /* 侧边栏链接效果 - 与首页完全一致 */
+    .sidebar__quote a {
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar__quote a:hover {
+      text-decoration-thickness: 2px;
+      animation: textShake 0.5s ease-in-out;
+    }
+    
+    /* 主题切换按钮 - 与首页完全一致 */
+    .theme-toggle {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0.8px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+    }
+    
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: rotate(15deg);
+    }
+    
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    
+    .theme-toggle .icon-sun { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    
+    /* 布局容器 - 与首页完全一致 */
+    .shell { 
+      min-height: 100vh; 
+      display: grid; 
+      grid-template-columns: 320px 1px 1fr; 
+      max-width: 1100px; 
+      margin: 0 auto; 
+    }
+    
+    /* 左侧边栏 - 与首页完全一致 */
+    .sidebar { 
+      padding: 55px 24px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-end; 
+      gap: 24px; 
+      position: sticky; 
+      top: 0; 
+      height: 100vh; 
+    }
+    
+    .sidebar__title { 
+      font-family: Georgia, serif; 
+      font-size: 28px; 
+      letter-spacing: 0.5px; 
+      font-weight: 400; 
+      margin: 0; 
+      position: relative;
+    }
+    
+    .sidebar__quote { 
+      max-width: 220px; 
+      text-align: right; 
+      font-family: Georgia, serif; 
+      font-size: 16px; 
+      line-height: 2; 
+      color: var(--muted); 
+      margin: 0; 
+    }
+    
+    .sidebar-actions { 
+      margin-top: auto; 
+      display: inline-flex; 
+      gap: 10px; 
+      align-items: center; 
+      align-self: flex-end; 
+    }
+    
+    /* 分割线 - 与首页完全一致 */
+    .divider { 
+      margin: 50px 0; 
+      width: 1px; 
+      height: auto; 
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--border) 30%,
+        var(--border) 70%,
+        transparent
+      );
+    }
+    
+    /* 主要内容区域 */
+    .content { 
+      padding: 56px 48px; 
+      min-height: 100vh; 
+      display: flex; 
+      width: 100%; 
+    }
+    
+    .content__inner { 
+      max-width: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      flex: 1; 
+      min-width: 0; 
+      width: 100%; 
+    }
+    
+    /* 主标题 - 与首页标题完全一致 */
+    .page-title {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      letter-spacing: 0.5px;
+      font-weight: 400;
+      margin: 0 0 2.5rem 0;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    
+    /* ABOUT页面内容 - 字体与首页引用完全一致 */
+    .about-content {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      line-height: 1.5;
+      max-width: 700px;
+      color: var(--muted);
+    }
+    
+    /* 段落间距 - 与首页引用完全一致 */
+    .about-content p {
+      margin-bottom: 1.5rem;
+    }
+    
+    /* 二级标题 - 比主标题小一号 */
+    .about-content h2 {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      letter-spacing: 0.4px;
+      font-weight: 400;
+      margin: 2.5rem 0 1.2rem;
+      color: var(--text);
+    }
+    
+    /* 三级标题 - 比二级标题小一号 */
+    .about-content h3 {
+      font-family: Georgia, serif;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+      font-weight: 400;
+      margin: 2rem 0 1rem;
+      color: var(--muted);
+    }
+    
+    /* 列表样式 */
+    .about-content ul {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    .about-content li {
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .about-content li::before {
+      content: "•";
+      color: var(--accent);
+      font-weight: bold;
+      display: inline-block;
+      width: 1em;
+      margin-left: -1em;
+    }
+    
+    /* 强调文本 */
+    .emphasis {
+      background: rgba(185, 28, 28, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-style: italic;
+    }
+    
+    /* 代码块样式 */
+    code {
+      background: rgba(185, 28, 28, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    
+    /* 链接样式 */
+    .about-content a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      transition: all 0.3s ease;
+    }
+    
+    .about-content a:hover {
+      text-decoration-thickness: 2px;
+      animation: textShake 0.5s ease-in-out;
+    }
+    
+    /* 引用块 */
+    blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 1.2rem;
+      margin: 1.5rem 0;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    /* 动画定义 - 与首页完全一致 */
+    @keyframes textShake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-0.5px); }
+      20%, 40%, 60%, 80% { transform: translateX(0.5px); }
+    }
+    
+    /* 响应式设计 - 与首页一致 */
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      .divider { display: none; }
+      .sidebar { 
+        position: static; 
+        height: auto; 
+        min-height: auto; 
+        padding: 28px 20px 20px; 
+        flex-direction: row; 
+        flex-wrap: wrap; 
+        align-items: center; 
+      }
+      .sidebar__title { 
+        order: 1; 
+        flex: 1 1 auto; 
+        font-size: 24px; 
+      }
+      .sidebar__quote { display: none; }
+      .sidebar-actions { 
+        order: 2; 
+        margin-top: 0; 
+        align-self: center; 
+      }
+      .content { padding: 20px 20px 40px; }
+      .content__inner { 
+        max-width: 100%; 
+        padding-bottom: 20px; 
+      }
+      .page-title { 
+        font-size: 24px; 
+        margin-bottom: 2rem;
+      }
+      .about-content h2 { font-size: 20px; }
+      .about-content h3 { font-size: 16px; }
+      .theme-toggle { width: 30px; height: 30px; }
+    }
+    
+    @media (max-width: 640px) {
+      .sidebar { padding: 20px 16px 16px; }
+      .content { padding: 16px 16px 32px; }
+      .page-title { 
+        font-size: 22px; 
+        margin-bottom: 1.8rem;
+      }
+      .about-content { 
+        font-size: 15px; 
+        line-height: 1.5;
+      }
+      .about-content h2 { font-size: 18px; }
+      .about-content h3 { font-size: 15px; }
+    }
+    
+    @media (max-width: 480px) {
+      .page-title { 
+        font-size: 20px; 
+        margin-bottom: 1.5rem;
+      }
+      .about-content { font-size: 14px; }
+      .about-content h2 { font-size: 16px; }
+      .about-content h3 { font-size: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <h1 class="sidebar__title">
+        <a href="/">Ⅶ-600905</a>
+      </h1>
+      <p class="sidebar__quote">
+        Ⅶ，是七年。<br>
+        [600905]，是那只股票。<br>
+        这里记录的，<br>
+        是一场为期七年的定投实验。<br>
+        人们称这种周期性考验为：<br>
+        <a href="/about">[七年之痒]</a>。
+      </p>
+      
+      <div class="sidebar-actions">
+        <a href="/">Mingo © 2026</a>
+        <button class="theme-toggle" aria-label="切换主题" title="切换主题">
+          <svg class="icon-moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+    
+    <div class="divider" aria-hidden="true"></div>
+    
+    <main class="content">
+      <div class="content__inner">
+        <h1 class="page-title">关于 "七年之痒"</h1>
+        
+        <div class="about-content">
+          <p>
+            这是一个为期七年的定投实验记录网站。
+          </p>
+          
+
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script>
+    // 主题切换功能 - 与首页完全一致
+    (() => {
+      const themeToggle = document.querySelector('.theme-toggle');
+      if (!themeToggle) return;
+      
+      const getCurrentTheme = () => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) return storedTheme;
+        
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        return prefersDark.matches ? 'dark' : 'light';
+      };
+      
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      };
+      
+      const currentTheme = getCurrentTheme();
+      applyTheme(currentTheme);
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,652 @@
+---
+// 定义数字"26"的点阵图案
+const defineNumberPattern = () => {
+  const grid = Array(7).fill().map(() => Array(12).fill(0));
+  
+  const number2 = [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [0,0,0,0,1],
+    [0,0,0,1,0],
+    [0,0,1,0,0],
+    [0,1,0,0,0],
+    [1,1,1,1,1]
+  ];
+
+  const number6 = [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,0],
+    [1,1,1,1,0],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [0,1,1,1,0]
+  ];
+  
+  for (let row = 0; row < 7; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (number2[row][col] === 1) grid[row][col] = 1;
+      if (number6[row][col] === 1) grid[row][col + 6] = 1;
+    }
+  }
+  
+  return grid;
+};
+
+// 生成84个月份数据
+const generateMonthRange = () => {
+  const months = [];
+  let year = 2026;
+  let month = 4;
+  const numberGrid = defineNumberPattern();
+  
+  for (let i = 0; i < 84; i++) {
+    months.push({
+      id: i + 1,
+      year,
+      month: month + 1,
+      date: new Date(year, month, 1).toISOString().split('T')[0],
+      displayDate: `${year}年${(month + 1).toString().padStart(2, '0')}月`,
+      isNumberPart: numberGrid[Math.floor(i / 12)][i % 12] === 1,
+      isLastSquare: i === 83,
+      isRed: false,
+      redShade: 1,
+      dayEntry: null
+    });
+    
+    month++;
+    if (month >= 12) { month = 0; year++; }
+  }
+  return months;
+};
+
+// 获取Markdown文件数据
+let dayEntries = [];
+
+try {
+  const globResult = import.meta.glob('../content/day/*.md', { eager: true });
+  dayEntries = Object.entries(globResult).map(([path, module]) => {
+    const fileName = path.split('/').pop()?.replace('.md', '') || '';
+    const fileDate = module.frontmatter?.date || '2026-01-01';
+    
+    return {
+      id: fileName,
+      date: fileDate,
+      year: parseInt(fileDate.split('-')[0]),
+      month: parseInt(fileDate.split('-')[1]),
+      title: module.frontmatter?.title || fileName,
+      excerpt: module.frontmatter?.excerpt || '',
+      readMoreLink: module.frontmatter?.readMoreLink || false
+    };
+  });
+} catch (error) {
+  // 失败时使用最小化示例数据
+  dayEntries = [{ id: 'example', date: '2026-03-15', year: 2026, month: 3, title: '示例', excerpt: '示例内容', readMoreLink: true }];
+}
+
+// 处理月份数据
+let monthData = generateMonthRange();
+monthData = monthData.map(month => {
+  const entryForMonth = dayEntries.find(entry => 
+    entry.year === month.year && entry.month === month.month
+  );
+  
+  if (entryForMonth) {
+    return {
+      ...month,
+      isRed: true,
+      redShade: Math.floor(Math.random() * 5) + 1,
+      dayEntry: entryForMonth
+    };
+  }
+  
+  return month;
+});
+
+// 统计有内容的月份
+const monthsWithContent = monthData.filter(month => month.isRed).length;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>七年之痒</title>
+  
+  <style>
+    /* CSS变量 */
+    :root {
+      color-scheme: light dark;
+      --bg: #fffefc;
+      --text: #292524;
+      --muted: #57534e;
+      --border: #e7e5e4;
+      --accent: #b91c1c;
+      --special: #f0f0f0;
+      --red-1: #ffeaea;
+      --red-2: #fde8e8;
+      --red-3: #fce7e7;
+      --red-4: #fbd5d5;
+      --red-5: #fed7d7;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #1a1a1a;
+      --text: #e5e5e5;
+      --muted: #a3a3a3;
+      --border: #333333;
+      --accent: #f87171;
+      --special: #3a3a3a;
+      --red-1: #4a2c2c;
+      --red-2: #4a2d2d;
+      --red-3: #4a2e2e;
+      --red-4: #4a2f2f;
+      --red-5: #4a3030;
+    }
+
+    /* 基础样式 */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { 
+      height: 100%; 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: system-ui, -apple-system, sans-serif; 
+      line-height: 1.6; 
+    }
+    
+    a { 
+      color: var(--text); 
+      text-decoration: none; 
+      transition: color 0.2s ease;
+    }
+    
+    a:hover { 
+      color: var(--accent); 
+    }
+    
+    /* 标题链接效果 */
+    .sidebar__title a:after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar__title a:hover:after {
+      transform: scaleX(1);
+    }
+    
+    /* 侧边栏链接效果 */
+    .sidebar__quote a {
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar__quote a:hover {
+      text-decoration-thickness: 2px;
+      animation: textShake 0.5s ease-in-out;
+    }
+    
+    /* 主题切换按钮 */
+    .theme-toggle {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0.8px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+    }
+    
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: rotate(15deg);
+    }
+    
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    
+    .theme-toggle .icon-sun { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    
+    /* 布局容器 */
+    .shell { 
+      min-height: 100vh; 
+      display: grid; 
+      grid-template-columns: 320px 1px 1fr; 
+      max-width: 1100px; 
+      margin: 0 auto; 
+    }
+    
+    /* 左侧边栏 */
+    .sidebar { 
+      padding: 55px 24px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-end; 
+      gap: 24px; 
+      position: sticky; 
+      top: 0; 
+      height: 100vh; 
+    }
+    
+    .sidebar__title { 
+      font-family: Georgia, serif; 
+      font-size: 28px; 
+      letter-spacing: 0.5px; 
+      font-weight: 400; 
+      margin: 0; 
+      position: relative;
+    }
+    
+    .sidebar__quote { 
+      max-width: 220px; 
+      text-align: right; 
+      font-family: Georgia, serif; 
+      font-size: 16px; 
+      line-height: 2; 
+      color: var(--muted); 
+      margin: 0; 
+    }
+    
+    .sidebar-actions { 
+      margin-top: auto; 
+      display: inline-flex; 
+      gap: 10px; 
+      align-items: center; 
+      align-self: flex-end; 
+    }
+    
+    /* 分割线 */
+    .divider { 
+      margin: 50px 0; 
+      width: 1px; 
+      height: auto; 
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--border) 30%,
+        var(--border) 70%,
+        transparent
+      );
+    }
+    
+    /* 主要内容区域 */
+    .content { 
+      padding: 56px 48px; 
+      min-height: 100vh; 
+      display: flex; 
+      width: 100%; 
+    }
+    
+    .content__inner { 
+      max-width: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      flex: 1; 
+      min-width: 0; 
+      width: 100%; 
+    }
+    
+    /* 网格容器 */
+    .grid-container { 
+      display: grid; 
+      grid-template-columns: repeat(12, 1fr); 
+      gap: 8px; 
+      width: 100%; 
+      margin-top: 20px; 
+    }
+    
+    /* 网格项 */
+    .grid-item { 
+      aspect-ratio: 1; 
+      border: 0.8px solid var(--border); 
+      border-radius: 6px; 
+      position: relative; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    
+    /* 网格项颜色 */
+    .grid-item.bg-bg { background: var(--bg); }
+    .grid-item.bg-special { background: var(--special); }
+    .grid-item.red-1 { background: var(--red-1) !important; }
+    .grid-item.red-2 { background: var(--red-2) !important; }
+    .grid-item.red-3 { background: var(--red-3) !important; }
+    .grid-item.red-4 { background: var(--red-4) !important; }
+    .grid-item.red-5 { background: var(--red-5) !important; }
+    
+    .grid-item:hover { z-index: 10; }
+    
+    /* 最后一个方格 */
+    .last-square-x { 
+      font-family: Arial, sans-serif; 
+      font-size: 18px; 
+      font-weight: bold; 
+      color: var(--bg); 
+      user-select: none; 
+      opacity: 0.8; 
+      z-index: 2; 
+    }
+    
+    /* 弹窗样式 */
+    .grid-item-popup { 
+      position: absolute; 
+      top: calc(100% + 8px); 
+      left: 50%; 
+      transform: translateX(-50%); 
+      opacity: 0; 
+      visibility: hidden; 
+      width: 200px; 
+      background: var(--bg); 
+      border: 0.8px solid var(--border); 
+      border-radius: 4px; 
+      padding: 10px; 
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+      z-index: 100; 
+      pointer-events: none; 
+      transition: opacity 0.2s ease, visibility 0.2s ease; 
+    }
+    
+    .grid-item:hover .grid-item-popup { 
+      opacity: 1; 
+      visibility: visible; 
+      pointer-events: auto; 
+    }
+    
+    .grid-item-popup::before {
+      content: ''; 
+      position: absolute; 
+      top: -6px; 
+      left: 50%; 
+      transform: translateX(-50%) rotate(45deg); 
+      width: 10px; 
+      height: 10px; 
+      background: var(--bg); 
+      border-left: 0.8px solid var(--border); 
+      border-top: 0.8px solid var(--border); 
+    }
+    
+    /* 弹窗内容 */
+    .popup-link, .popup-content {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .popup-date { 
+      font-size: 11px; 
+      color: var(--muted); 
+      margin-bottom: 4px; 
+      font-family: 'Courier New', monospace; 
+    }
+    
+    .popup-title { 
+      font-size: 13px; 
+      font-weight: 600; 
+      margin: 0 0 6px; 
+      line-height: 1.4; 
+      color: var(--accent); 
+    }
+    
+    .popup-excerpt { 
+      font-size: 11px; 
+      line-height: 1.4; 
+      margin: 0 0 6px; 
+      color: var(--text); 
+      overflow: hidden; 
+      display: -webkit-box; 
+      -webkit-line-clamp: 2; 
+      -webkit-box-orient: vertical; 
+    }
+    
+    /* 链接样式 */
+    .popup-link.readable:hover { 
+      background: rgba(185, 28, 28, 0.05); 
+    }
+    
+    .popup-link.readable .popup-title { 
+      text-decoration: underline; 
+      text-decoration-color: var(--accent); 
+      text-underline-offset: 2px; 
+    }
+    
+    /* 动画定义 */
+    @keyframes textShake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-0.5px); }
+      20%, 40%, 60%, 80% { transform: translateX(0.5px); }
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      .divider { display: none; }
+      .sidebar { 
+        position: static; 
+        height: auto; 
+        min-height: auto; 
+        padding: 28px 20px 20px; 
+        flex-direction: row; 
+        flex-wrap: wrap; 
+        align-items: center; 
+      }
+      .sidebar__title { 
+        order: 1; 
+        flex: 1 1 auto; 
+        font-size: 24px; 
+      }
+      .sidebar__quote { display: none; }
+      .sidebar-actions { 
+        order: 2; 
+        margin-top: 0; 
+        align-self: center; 
+      }
+      .content { padding: 20px 20px 40px; }
+      .content__inner { 
+        overflow-x: auto; 
+        padding-bottom: 10px; 
+      }
+      .grid-container { min-width: calc(12 * (40px + 6px) - 6px); }
+      .grid-item-popup { width: 160px; }
+      .theme-toggle { width: 30px; height: 30px; }
+    }
+    
+    @media (max-width: 640px) {
+      .sidebar { padding: 20px 16px 16px; }
+      .content { padding: 16px 16px 32px; }
+      .grid-item-popup { 
+        width: 140px; 
+        padding: 8px; 
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <h1 class="sidebar__title">
+        <a href="/">Ⅶ-600905</a>
+      </h1>
+      <p class="sidebar__quote">
+        Ⅶ，是七年。<br>
+        [600905]，是那只股票。<br>
+        这里记录的，<br>
+        是一场为期七年的定投实验。<br>
+        人们称这种周期性考验为：<br>
+        <a href="/about">[七年之痒]</a>。
+      </p>
+      
+      <div class="sidebar-actions">
+        <a href="/">Mingo © 2026</a>
+        <button class="theme-toggle" aria-label="切换主题" title="切换主题">
+          <svg class="icon-moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+    
+    <div class="divider" aria-hidden="true"></div>
+    
+    <main class="content">
+      <div class="content__inner">
+        <div class="grid-container">
+          {monthData.map(month => {
+            const hasContent = month.isRed && month.dayEntry;
+            
+            let colorClass = '';
+            if (hasContent) {
+              colorClass = `red-${month.redShade}`;
+            } else if (month.isNumberPart || month.isLastSquare) {
+              colorClass = 'bg-special';
+            } else {
+              colorClass = 'bg-bg';
+            }
+            
+            return (
+              <div 
+                class={`grid-item ${colorClass}`}
+                data-id={month.id}
+                data-month={month.displayDate}
+              >
+                {month.isLastSquare && (
+                  <span class="last-square-x">End</span>
+                )}
+                
+                {hasContent && month.dayEntry && (
+                  <div class="grid-item-popup">
+                    {month.dayEntry.readMoreLink ? (
+                      <a 
+                        href={`/posts/${month.dayEntry.id}`}
+                        class="popup-link readable"
+                      >
+                        <div class="popup-date">{month.dayEntry.date}</div>
+                        <h4 class="popup-title">{month.dayEntry.title}</h4>
+                        <p class="popup-excerpt">{month.dayEntry.excerpt}</p>
+                      </a>
+                    ) : (
+                      <div class="popup-content">
+                        <div class="popup-date">{month.dayEntry.date}</div>
+                        <h4 class="popup-title">{month.dayEntry.title}</h4>
+                        <p class="popup-excerpt">{month.dayEntry.excerpt}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script>
+    // 弹窗管理
+    (() => {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const gridItems = document.querySelectorAll('.grid-item');
+          let activePopup = null;
+          let closeTimeout = null;
+          
+          const closeAllPopups = () => {
+            document.querySelectorAll('.grid-item-popup').forEach(popup => {
+              popup.style.opacity = '0';
+              popup.style.visibility = 'hidden';
+            });
+            activePopup = null;
+          };
+          
+          gridItems.forEach(item => {
+            const popup = item.querySelector('.grid-item-popup');
+            if (!popup) return;
+            
+            item.addEventListener('mouseenter', () => {
+              clearTimeout(closeTimeout);
+              if (activePopup && activePopup !== item) closeAllPopups();
+              
+              activePopup = item;
+              popup.style.opacity = '1';
+              popup.style.visibility = 'visible';
+            });
+            
+            item.addEventListener('mouseleave', () => {
+              closeTimeout = setTimeout(() => {
+                if (activePopup === item) closeAllPopups();
+              }, 150);
+            });
+          });
+          
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('.grid-item')) closeAllPopups();
+          });
+        }, 100);
+      });
+    })();
+    
+    // 主题切换功能
+    (() => {
+      const themeToggle = document.querySelector('.theme-toggle');
+      if (!themeToggle) return;
+      
+      const getCurrentTheme = () => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) return storedTheme;
+        
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        return prefersDark.matches ? 'dark' : 'light';
+      };
+      
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      };
+      
+      const currentTheme = getCurrentTheme();
+      applyTheme(currentTheme);
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+      });
+    })();
+  </script>
+</body>
+</html>
