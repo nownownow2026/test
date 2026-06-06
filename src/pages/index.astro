@@ -1,7 +1,5 @@
 ---
-// Astro 组件逻辑（这里无需额外后端逻辑）
 ---
-
 <!DOCTYPE html>
 <html lang="zh-cn">
 <head>
@@ -296,8 +294,8 @@
                     <span>📅</span>
                     <span>day by days</span>
                 </div>
-                <!-- 右上角 -->
-                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+                <!-- 右上角【删掉onclick="toggleTheme()"，改用JS绑定】 -->
+                <button class="theme-toggle" id="themeBtn" aria-label="Toggle Theme">
                     <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                     </svg>
@@ -322,89 +320,93 @@
         </div>
     </div>
 
-    <script>
-        function createStars() {
-            const starsContainer = document.getElementById('stars');
-            const starTypes = ['star', 'star-hex']; 
+<script>
+    function createStars() {
+        const starsContainer = document.getElementById('stars');
+        const starTypes = ['star', 'star-hex']; 
+        
+        for (let i = 0; i < 80; i++) {
+            const star = document.createElement('div');
+            const typeIndex = Math.floor(Math.random() * starTypes.length);
+            star.className = starTypes[typeIndex];
             
-            for (let i = 0; i < 80; i++) {
-                const star = document.createElement('div');
-                const typeIndex = Math.floor(Math.random() * starTypes.length);
-                star.className = starTypes[typeIndex];
-                
-                const size = Math.random() * 2 + 1;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.animationDelay = `${Math.random() * 5}s`;
-                
-                if (typeIndex === 0) {
-                    star.style.opacity = Math.random() * 0.5 + 0.2;
-                } else {
-                    // 如果是六角星，插入 SVG
-                    star.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="white" width="100%" height="100%">
-                            <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/>
-                        </svg>
-                    `;
-                    star.style.opacity = Math.random() * 0.5 + 0.3;
-                }
-                
-                starsContainer.appendChild(star);
-            }
-        }
-
-        function updateSiteDays() {
-            const launchDate = new Date('2018-11-11');
-            const today = new Date();
-            const diffTime = today - launchDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const size = Math.random() * 2 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.animationDelay = `${Math.random() * 5}s`;
             
-            document.getElementById('site-days-counter').textContent = 
-                `${Math.max(0, diffDays)} 天`;
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            const iconContainer = document.getElementById('theme-icon');
-            
-            if (body.classList.contains('day-mode')) {
-                body.classList.replace('day-mode', 'night-mode');
-                iconContainer.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <circle cx="12" cy="12" r="5"/>
-                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                    </svg>
-                `;
+            if (typeIndex === 0) {
+                star.style.opacity = Math.random() * 0.5 + 0.2;
             } else {
-                body.classList.replace('night-mode', 'day-mode');
-                iconContainer.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                // 如果是六角星，插入 SVG
+                star.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="white" width="100%" height="100%">
+                        <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/>
                     </svg>
                 `;
+                star.style.opacity = Math.random() * 0.5 + 0.3;
             }
-        }
-
-        function updateTime() {
-            const now = new Date();
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const ampm = hours >= 12 ? 'pm' : 'am';
             
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            
-            document.getElementById('current-time').textContent = 
-                `${hours}:${minutes}:${seconds} ${ampm}`;
+            starsContainer.appendChild(star);
         }
+    }
 
+    function updateSiteDays() {
+        const launchDate = new Date('2018-11-11');
+        const today = new Date();
+        const diffTime = today - launchDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        document.getElementById('site-days-counter').textContent = 
+            `${Math.max(0, diffDays)} 天`;
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const iconContainer = document.getElementById('theme-icon');
+        
+        if (body.classList.contains('day-mode')) {
+            body.classList.replace('day-mode', 'night-mode');
+            iconContainer.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+            `;
+        } else {
+            body.classList.replace('night-mode', 'day-mode');
+            iconContainer.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                </svg>
+            `;
+        }
+    }
+
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        
+        document.getElementById('current-time').textContent = 
+            `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    // 关键修复：页面加载完成后绑定点击事件
+    document.addEventListener('DOMContentLoaded', ()=>{
+        document.getElementById('themeBtn').addEventListener('click', toggleTheme);
         createStars();
         updateSiteDays();
         updateTime();
         setInterval(updateTime, 1000);
-    </script>
+    })
+</script>
 </body>
 </html>
